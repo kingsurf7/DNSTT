@@ -1,5 +1,6 @@
 // Package mobile provides a mobile-friendly interface to dnstt-client
 package mobile
+import "C"
 
 import (
 	"bytes"
@@ -43,6 +44,8 @@ const (
 
 // base32Encoding is a base32 encoding without padding.
 var base32Encoding = base32.StdEncoding.WithPadding(base32.NoPadding)
+var globalClient *DnsttClient
+var globalMu sync.Mutex
 
 // ProtectSocketFunc is a callback to protect a socket from VPN routing
 type ProtectSocketFunc func(fd int) bool
@@ -680,6 +683,37 @@ func isPrivateIP(ip net.IP) bool {
 		}
 	}
 	return false
+}
+//export StartDnstt
+func StartDnstt(dnsServer, tunnelDomain, pubKeyHex, listenAddr string) int {
+    client, err := NewClient(dnsServer, tunnelDomain, pubKeyHex, listenAddr)
+    if err != nil {
+        return -1
+    }
+    if err := client.Start(); err != nil {
+        return -2
+    }
+
+    globalMu.Lock()
+    globalClient = client
+    globalMu.Unlock()
+
+    return 0
+}
+
+//export StopDnstt
+func StopDnstt() int {
+    globalMu.Lock()
+    defer globalMu.Unlock()
+
+    if globalClient == nil {
+        return -1
+    }
+
+    globalClient.Stop()
+    globalClient = nil
+
+    return 0
 }
 
 // ConnectWithTunFd starts the tunnel using a TUN file descriptor from Android
