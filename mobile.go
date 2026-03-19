@@ -19,9 +19,9 @@ import (
 
 	"github.com/xtaci/kcp-go/v5"
 	"github.com/xtaci/smux"
-	"mobile/dns"
-    "mobile/noise"
-    "mobile/turbotunnel"
+	"dns/*"
+    "noise/*"
+    "turbotunnel/*"
 
 )
 
