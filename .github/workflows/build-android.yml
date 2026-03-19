@@ -23,7 +23,7 @@ jobs:
         with:
           ndk-version: r26d
           add-to-path: true
-      - name: Debug: list all Go packages
+      - name: Debug: 
           run: |
             echo "=== Listing all Go files with their package ==="
             grep -R "package " -n .
