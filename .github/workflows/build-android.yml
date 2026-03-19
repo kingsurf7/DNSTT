@@ -1,0 +1,44 @@
+name: Build Android .so
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      GO_VERSION: 1.22.4
+      ANDROID_NDK_VERSION: r25c
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Setup Android NDK
+      uses: android-actions/setup-ndk@v2
+      with:
+        ndk-version: ${{ env.ANDROID_NDK_VERSION }}
+
+    - name: Build .so for Android
+      run: |
+        mkdir -p build
+        ARCHS=("arm" "arm64" "386" "amd64")
+        for arch in "${ARCHS[@]}"; do
+          echo "Building for $arch..."
+          GOOS=android GOARCH=$arch go build -buildmode=c-shared -o build/libdnstt_$arch.so ./mobile
+        done
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dnstt-android-so
+        path: build/*.so
