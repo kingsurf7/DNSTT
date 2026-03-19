@@ -12,7 +12,6 @@ jobs:
 
     env:
       GO_VERSION: 1.22.4
-      ANDROID_NDK_VERSION: r25c
 
     steps:
     - name: Checkout code
@@ -23,10 +22,15 @@ jobs:
       with:
         go-version: ${{ env.GO_VERSION }}
 
-    - name: Setup Android NDK
-      uses: android-actions/setup-ndk@v2
-      with:
-        ndk-version: ${{ env.ANDROID_NDK_VERSION }}
+    - name: Install Android SDK and NDK
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y unzip wget
+        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+        unzip cmdline-tools.zip -d $HOME/android-sdk
+        yes | $HOME/android-sdk/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "ndk;25.2.9519653"
+        echo "ANDROID_NDK_HOME=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+        echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
 
     - name: Build .so for Android
       run: |
@@ -38,7 +42,7 @@ jobs:
         done
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dnstt-android-so
         path: build/*.so
