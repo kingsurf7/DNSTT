@@ -19,9 +19,10 @@ import (
 
 	"github.com/xtaci/kcp-go/v5"
 	"github.com/xtaci/smux"
-	"www.bamsoftware.com/git/dnstt.git/dns"
-	"www.bamsoftware.com/git/dnstt.git/noise"
-	"www.bamsoftware.com/git/dnstt.git/turbotunnel"
+	"mobile/dns/"
+    "mobile/noise/"
+    "mobile/turbotunnel/"
+
 )
 
 const (
