@@ -1,48 +1,49 @@
-name: Build Android .so
+name: Build DNSTT Android
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      GO_VERSION: 1.22.4
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Setup Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ env.GO_VERSION }}
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
 
-    - name: Install Android SDK and NDK
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y unzip wget
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-        unzip cmdline-tools.zip -d $HOME/android-sdk
-        yes | $HOME/android-sdk/cmdline-tools/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "ndk;25.2.9519653"
-        echo "ANDROID_NDK_HOME=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
-        echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+      - name: Install Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+          add-to-path: true
 
-    - name: Build .so for Android
-      run: |
-        mkdir -p build
-        ARCHS=("arm" "arm64" "386" "amd64")
-        for arch in "${ARCHS[@]}"; do
-          echo "Building for $arch..."
-          GOOS=android GOARCH=$arch go build -buildmode=c-shared -o build/libdnstt_$arch.so ./mobile
-        done
+      - name: Build arm64-v8a
+        run: |
+          export CGO_ENABLED=1
+          export CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang
+          GOOS=android GOARCH=arm64 go build -buildmode=c-shared -o build/libdnstt_arm64.so ./mobile
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: dnstt-android-so
-        path: build/*.so
+      - name: Build armeabi-v7a
+        run: |
+          export CGO_ENABLED=1
+          export CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang
+          GOOS=android GOARCH=arm go build -buildmode=c-shared -o build/libdnstt_arm.so ./mobile
+
+      - name: Build x86_64
+        run: |
+          export CGO_ENABLED=1
+          export CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang
+          GOOS=android GOARCH=amd64 go build -buildmode=c-shared -o build/libdnstt_x86_64.so ./mobile
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dnstt-android-libs
+          path: build/
