@@ -24,9 +24,9 @@ jobs:
           ndk-version: r26d
           add-to-path: true
       - name: Debug: 
-          run: |
-            echo "=== Listing all Go files with their package ==="
-            grep -R "package " -n .
+        run: |
+          echo "=== Listing all Go files with their package ==="
+          grep -R "package " -n .
 
 
       - name: Build arm64-v8a
