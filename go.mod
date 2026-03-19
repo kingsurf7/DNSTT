@@ -1,4 +1,4 @@
-module www.bamsoftware.com/git/dnstt.git
+module mobile
 
 go 1.24.0
 
